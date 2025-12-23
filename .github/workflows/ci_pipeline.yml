@@ -42,8 +42,8 @@ jobs:
     - name: Run MLProject (Training)
       working-directory: ./MLProject
       run: |
-        # Gunakan --env-manager=local sebagai pengganti --no-conda di MLflow versi baru
-        mlflow run . --env-manager=local
+        # Jalankan langsung dengan python agar file run_id.txt tersimpan di folder yang sama
+        python modelling.py
 
     # 6. Build Docker Image & Push (BAGIAN ADVANCE)
     - name: Build and Push Docker Image
