@@ -52,8 +52,6 @@ jobs:
             dagshub \
             seaborn \
             matplotlib \
-            mlserver \
-            mlserver-mlflow
 
       # =========================
       # 4. RUN MODELING SCRIPT
