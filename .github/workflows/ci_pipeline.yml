@@ -1,64 +1,99 @@
-name: CI Pipeline & Docker Build
+name: CI Pipeline & Docker Build (Final)
 
-# Trigger: Jalan setiap kali ada Push
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
-  # Mengambil kunci dari Brankas GitHub (Secrets)
-  DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
-  DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-  # Variable ini dibutuhkan dagshub.init()
-  MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
-  MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+  # GANTI INI: Nama Repository di Docker Hub
+  IMAGE_NAME: "msml"
+  EXPERIMENT_NAME: "CI_Experiment"
 
 jobs:
-  build-train-docker:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    
+
+    # Load Secrets ke Environment Variables
+    env:
+      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
     steps:
-    # 1. Ambil kode dari repo
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      # =========================
+      # 1. CHECKOUT REPOSITORY
+      # =========================
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    # 2. Siapkan Python
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
+      # =========================
+      # 2. SETUP PYTHON
+      # =========================
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
 
-    # 3. Install Library
-    - name: Install Dependencies
-      run: |
-        pip install mlflow dagshub pandas scikit-learn seaborn matplotlib mlserver mlserver-mlflow
+      # =========================
+      # 3. INSTALL DEPENDENCIES
+      # =========================
+      - name: Install dependencies
+        run: |
+          pip install \
+            mlflow \
+            pandas \
+            numpy \
+            scikit-learn \
+            dagshub \
+            seaborn \
+            matplotlib \
+            mlserver \
+            mlserver-mlflow
 
-    # 4. Login ke Docker Hub (Agar bisa upload)
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      # =========================
+      # 4. RUN MODELING SCRIPT
+      # =========================
+      - name: Run Modeling & Save Run ID
+        working-directory: ./MLProject
+        run: |
+          # Jalankan script python langsung
+          python modelling.py
 
-    # 5. Jalankan Training (File MLProject)
-    - name: Run MLProject (Training)
-      working-directory: ./MLProject
-      run: |
-        python modelling.py
+      # =========================
+      # 5. LOGIN DOCKER HUB
+      # =========================
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 6. Build Docker Image & Push (BAGIAN ADVANCE)
-    - name: Build and Push Docker Image
-      working-directory: ./MLProject
-      run: |
-        # Baca Run ID dari file txt yang dibuat oleh modelling.py
-        RUN_ID=$(cat run_id.txt)
-        echo "Detected Run ID: $RUN_ID"
-        
-        # Tentukan Nama Image: username/nama-image:tag
-        IMAGE_NAME="tickelboy/msml:latest"
-        
-        # Perintah MLflow untuk bungkus model jadi Docker
-        echo "Building Docker Image..."
-        mlflow models build-docker -m "runs:/$RUN_ID/model_final" -n "$IMAGE_NAME" --enable-mlserver
-        
-        # Upload ke Docker Hub
-        echo "Pushing to Docker Hub..."
-        docker push "$IMAGE_NAME"
+      # =========================
+      # 6. BUILD & PUSH DOCKER IMAGE
+      # =========================
+      - name: Build and Push Docker Image
+        working-directory: ./MLProject
+        run: |
+          # Baca Run ID dari file txt (Hasil dari langkah 4)
+          RUN_ID=$(cat run_id.txt)
+          echo "Detected Run ID: $RUN_ID"
+
+          # Hardcode nama image agar PASTI BENAR: tickelboy/msml:latest
+          FULL_IMAGE_NAME="tickelboy/${{ env.IMAGE_NAME }}:latest"
+          
+          echo "Building Image: $FULL_IMAGE_NAME"
+
+          # Build Docker Image menggunakan MLflow
+          mlflow models build-docker \
+            -m "runs:/$RUN_ID/model_final" \
+            -n "$FULL_IMAGE_NAME" \
+            --enable-mlserver
+
+          # Push ke Docker Hub
+          echo "Pushing to Docker Hub..."
+          docker push "$FULL_IMAGE_NAME"
