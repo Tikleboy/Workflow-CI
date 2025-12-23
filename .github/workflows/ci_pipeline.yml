@@ -53,7 +53,7 @@ jobs:
         echo "Detected Run ID: $RUN_ID"
         
         # Tentukan Nama Image: username/nama-image:tag
-        IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/msml:latest"
+        IMAGE_NAME="tickelboy/msml:latest"
         
         # Perintah MLflow untuk bungkus model jadi Docker
         echo "Building Docker Image..."
