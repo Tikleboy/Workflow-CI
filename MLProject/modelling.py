@@ -12,30 +12,28 @@ from sklearn.metrics import accuracy_score
 # ====================================================
 # Kita ambil username dari Environment Variable (yang diset di file YAML)
 REPO_OWNER = os.environ.get("Tickleboy")
-REPO_NAME = "https://dagshub.com/Tikleboy/Eksperimen_MSML_Stanly" # <--- WAJIB GANTI INI !!!
+REPO_NAME = "Eksperimen_MSML_Stanly" # 
 
 # Cek apakah script jalan di GitHub Actions atau Lokal
 if REPO_OWNER and REPO_NAME:
     print(f"[INFO] Terdeteksi berjalan di CI/CD. Konek ke: {REPO_OWNER}/{REPO_NAME}")
-    dagshub.init(repo_owner=REPO_OWNER, repo_name=REPO_NAME, mlflow=True)
+    dagshub.init(repo_owner='Tikleboy', repo_name='Eksperimen_MSML_Stanly', mlflow=True)
 else:
     print("[WARN] Tidak ada credentials DagsHub. Pastikan Anda sudah set Secrets di GitHub.")
 
 def train():
-    print("=== Memulai Training Model ===")
-    
     # 2. Load Data
     try:
         # Pastikan path ini sesuai dengan struktur folder Anda
-        df = pd.read_csv('data/ulasan_KAI_clean.csv')
+        df = pd.read_csv('data/ulasan_KAI_preprocessing.csv')
     except FileNotFoundError:
-        print("[ERROR] File dataset tidak ditemukan di 'data/ulasan_KAI_clean.csv'")
+        print("[ERROR] File dataset tidak ditemukan di 'data/ulasan_KAI_preprocessing.csv'")
         return
 
     # 3. Persiapan Data (Sesuaikan fitur dengan dataset Anda)
     X = df[['thumbsUpCount_scaled']] 
     y = df['sentiment']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     
     # 4. Setup Experiment
     mlflow.set_experiment("CI_Pipeline_Docker")
