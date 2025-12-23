@@ -42,7 +42,6 @@ jobs:
     - name: Run MLProject (Training)
       working-directory: ./MLProject
       run: |
-        # Jalankan langsung dengan python agar file run_id.txt tersimpan di folder yang sama
         python modelling.py
 
     # 6. Build Docker Image & Push (BAGIAN ADVANCE)
