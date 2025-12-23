@@ -59,8 +59,7 @@ jobs:
       - name: Run Modeling & Save Run ID
         working-directory: ./MLProject
         run: |
-          # Jalankan script python langsung
-          python modelling.py
+          mlflow run .
 
       # =========================
       # 5. LOGIN DOCKER HUB
