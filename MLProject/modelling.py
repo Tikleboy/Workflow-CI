@@ -36,7 +36,7 @@ def train():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     
     # 4. Setup Experiment
-    mlflow.set_experiment("CI_Pipeline_Docker")
+    # mlflow.set_experiment("CI_Pipeline_Docker")
     mlflow.sklearn.autolog(disable=True) # Matikan autolog agar kita bisa kontrol log
     
     with mlflow.start_run() as run:
@@ -54,7 +54,7 @@ def train():
         mlflow.sklearn.log_model(rf, "model_final")
         
         # ===========================================================
-        # 5. BAGIAN PENYELAMAT: SIMPAN RUN ID KE FILE TXT
+        # 5. SIMPAN RUN ID KE FILE TXT
         # ===========================================================
         # Langkah ini PENTING agar langkah selanjutnya (Build Docker) 
         # tahu model mana yang harus dibungkus.
